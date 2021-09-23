@@ -19,6 +19,8 @@ import os
 import sys
 from functools import partial
 from multiprocessing import Pool
+
+from ludwig.data.preprocessing import handle_missing_values
 from typing import Union
 
 import numpy as np
@@ -358,10 +360,9 @@ class ImageFeatureMixin:
                             num_processes
                         )
                     )
-                    res = pool.map(
+                    proc_df[feature[PROC_COLUMN]] = pool.map(
                         read_image_and_resize, all_img_entries
                     )
-                    proc_df[feature[PROC_COLUMN]] = [x for x in res if x is not None]
             else:
                 # If we're not running multiple processes and we are only processing one
                 # image just use this faster shortcut, bypassing multiprocessing.Pool.map
@@ -378,12 +379,10 @@ class ImageFeatureMixin:
                     else:
                         return read_image_and_resize(img_store)
 
-                res = backend.df_engine.map_objects(
+                proc_df[feature[PROC_COLUMN]] = backend.df_engine.map_objects(
                     input_df[feature[COLUMN]],
                     _get_processed_image
                 )
-                if res is not None:
-                    proc_df[feature[PROC_COLUMN]] = res
         else:
 
             all_img_entries = [get_abs_path(src_path, img_entry)
@@ -407,6 +406,13 @@ class ImageFeatureMixin:
                 h5_file.flush()
 
             proc_df[feature[PROC_COLUMN]] = np.arange(num_images)
+
+        handle_missing_values(
+            proc_df,
+            feature,
+            preprocessing_parameters,
+            PROC_COLUMN
+        )
         return proc_df
 
 

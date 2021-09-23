@@ -1311,25 +1311,25 @@ def precompute_fill_value(dataset_cols, feature, preprocessing_parameters, backe
     return None
 
 
-def handle_missing_values(dataset_cols, feature, preprocessing_parameters):
+def handle_missing_values(dataset_cols, feature, preprocessing_parameters, column=COLUMN):
     missing_value_strategy = preprocessing_parameters['missing_value_strategy']
 
     # Check for the precomputed fill value in the metadata
     computed_fill_value = preprocessing_parameters.get('computed_fill_value')
 
     if computed_fill_value is not None:
-        dataset_cols[feature[COLUMN]] = dataset_cols[feature[COLUMN]].fillna(
+        dataset_cols[feature[column]] = dataset_cols[feature[column]].fillna(
             computed_fill_value,
         )
     elif missing_value_strategy in [BACKFILL, BFILL, PAD, FFILL]:
-        dataset_cols[feature[COLUMN]] = dataset_cols[feature[COLUMN]].fillna(
+        dataset_cols[feature[column]] = dataset_cols[feature[column]].fillna(
             method=missing_value_strategy,
         )
     elif missing_value_strategy == DROP_ROW:
         # Here we only drop from this series, but after preprocessing we'll do a second
         # round of dropping NA values from the entire output dataframe, which will
         # result in the removal of the rows.
-        dataset_cols[feature[COLUMN]] = dataset_cols[feature[COLUMN]].dropna()
+        dataset_cols[feature[column]] = dataset_cols[feature[column]].dropna()
     else:
         raise ValueError('Invalid missing value strategy')
 
