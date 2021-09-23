@@ -358,9 +358,10 @@ class ImageFeatureMixin:
                             num_processes
                         )
                     )
-                    proc_df[feature[PROC_COLUMN]] = pool.map(
+                    res = pool.map(
                         read_image_and_resize, all_img_entries
                     )
+                    proc_df[feature[PROC_COLUMN]] = [x for x in res if x is not None]
             else:
                 # If we're not running multiple processes and we are only processing one
                 # image just use this faster shortcut, bypassing multiprocessing.Pool.map
@@ -377,10 +378,12 @@ class ImageFeatureMixin:
                     else:
                         return read_image_and_resize(img_store)
 
-                proc_df[feature[PROC_COLUMN]] = backend.df_engine.map_objects(
+                res = backend.df_engine.map_objects(
                     input_df[feature[COLUMN]],
                     _get_processed_image
                 )
+                if res is not None:
+                    proc_df[feature[PROC_COLUMN]] = res
         else:
 
             all_img_entries = [get_abs_path(src_path, img_entry)
@@ -398,9 +401,9 @@ class ImageFeatureMixin:
                     dtype=np.uint8
                 )
                 for i, img_entry in enumerate(all_img_entries):
-                    image_dataset[i, :height, :width, :] = (
-                        read_image_and_resize(img_entry)
-                    )
+                    res = read_image_and_resize(img_entry)
+                    if res is not None:
+                        image_dataset[i, :height, :width, :] = res
                 h5_file.flush()
 
             proc_df[feature[PROC_COLUMN]] = np.arange(num_images)
