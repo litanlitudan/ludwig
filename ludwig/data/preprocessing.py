@@ -1290,6 +1290,13 @@ def build_data(
             backend,
             skip_save_processed_input
         )
+        if feature[TYPE] == IMAGE:
+            handle_missing_values(
+                proc_cols,
+                feature,
+                preprocessing_parameters,
+                PROC_COLUMN
+            )
 
     return proc_cols
 

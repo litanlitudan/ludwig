@@ -20,7 +20,6 @@ import sys
 from functools import partial
 from multiprocessing import Pool
 
-from ludwig.data.preprocessing import handle_missing_values
 from typing import Union
 
 import numpy as np
@@ -406,13 +405,6 @@ class ImageFeatureMixin:
                 h5_file.flush()
 
             proc_df[feature[PROC_COLUMN]] = np.arange(num_images)
-
-        handle_missing_values(
-            proc_df,
-            feature,
-            preprocessing_parameters,
-            PROC_COLUMN
-        )
         return proc_df
 
 
