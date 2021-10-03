@@ -33,7 +33,7 @@ from ludwig.utils.fs_utils import open_file, is_http, upgrade_http
 
 logger = logging.getLogger(__name__)
 
-  
+
 def get_gray_default_image(height, width, num_channels):
     return np.full((height, width, num_channels), 128, dtype=np.uint8)
 
@@ -90,10 +90,18 @@ def is_image(src_path: str, img_entry: Union[bytes, str]) -> bool:
         return False
 
 
-@functools.lru_cache(maxsize=32)
+# For image inference, want to bias towards both readable images, but also account for unreadable (i.e. expired) urls
+# with image extensions
+def is_image_score(src_path, img_entry):
+    if is_image(src_path, img_entry):
+        return 1
+    elif isinstance(img_entry, str) and img_entry.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+        return 0.5
+    return 0
+
 def read_image(img: Union[str, torch.Tensor], num_channels: Optional[int] = None) -> torch.Tensor:
     """ Returns a tensor with CHW format.
-    
+
     If num_channels is not provided, he image is read in unchanged format.
     """
     if isinstance(img, str):
@@ -112,7 +120,7 @@ def read_image_from_str(img: str, num_channels: Optional[int] = None) -> torch.T
             'pip install ludwig[image]'
         )
         sys.exit(-1)
-    
+
     try:
         if num_channels == 1:
             return read_image(img, mode=ImageReadMode.GRAY)
